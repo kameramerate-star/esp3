@@ -1,1 +1,339 @@
-# esp3
+-- ==================== MENSAGEM RIMURO NA TELA (Melhorada) ====================
+local function ShowRimuroMessage()
+    local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "RimuroWelcome"
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = playerGui
+
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 460, 0, 160)
+    frame.Position = UDim2.new(0.5, -230, 0.25, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+    frame.BorderSizePixel = 0
+    frame.BackgroundTransparency = 0.05
+    frame.Parent = screenGui
+
+    -- Canto arredondado + Borda brilhante
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 18)
+    corner.Parent = frame
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(255, 100, 255)
+    stroke.Thickness = 1.8
+    stroke.Transparency = 0.4
+    stroke.Parent = frame
+
+    -- Gradiente no fundo
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 20, 45)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 25))
+    }
+    gradient.Rotation = 90
+    gradient.Parent = frame
+
+    -- Título
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0.5, 0)
+    title.BackgroundTransparency = 1
+    title.Text = "ESP PREMIUM"
+    title.TextColor3 = Color3.fromRGB(255, 85, 255)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 38
+    title.Parent = frame
+
+    local titleStroke = Instance.new("UIStroke")
+    titleStroke.Color = Color3.fromRGB(180, 50, 255)
+    titleStroke.Thickness = 2
+    titleStroke.Parent = title
+
+    -- Créditos
+    local credit = Instance.new("TextLabel")
+    credit.Size = UDim2.new(1, 0, 0.5, 0)
+    credit.Position = UDim2.new(0, 0, 0.5, 0)
+    credit.BackgroundTransparency = 1
+    credit.Text = "made by RIMURO"
+    credit.TextColor3 = Color3.fromRGB(255, 215, 240)
+    credit.Font = Enum.Font.GothamSemibold
+    credit.TextSize = 27
+    credit.Parent = frame
+
+    -- Animação de entrada + saída
+    frame.BackgroundTransparency = 1
+    title.TextTransparency = 1
+    credit.TextTransparency = 1
+
+    -- Fade In
+    local TS = game:GetService("TweenService")
+    local tweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    
+    TS:Create(frame, tweenInfo, {BackgroundTransparency = 0.05}):Play()
+    TS:Create(title, tweenInfo, {TextTransparency = 0}):Play()
+    TS:Create(credit, tweenInfo, {TextTransparency = 0}):Play()
+
+    -- Fade Out depois de 3 segundos
+    task.delay(3, function()
+        local tweenOut = TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        
+        TS:Create(frame, tweenOut, {BackgroundTransparency = 1}):Play()
+        TS:Create(title, tweenOut, {TextTransparency = 1}):Play()
+        TS:Create(credit, tweenOut, {TextTransparency = 1}):Play()
+
+        task.delay(1, function()
+            screenGui:Destroy()
+        end)
+    end)
+end
+
+-- ==================== CHAME A FUNÇÃO ====================
+ShowRimuroMessage()
+-- =============================================
+-- ESP PREMIUM - Rimuro + Grok Edition ✨ (MD FIXADO v2)
+-- Tecla: U
+-- =============================================
+
+print(" ")
+print("============================================")
+print("🔥 ESP Premium made by RIMURO 🔥")
+print("        Grok Edition - MD Fixado")
+print("============================================")
+print(" ")
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+
+local tracked = {}
+local espEnabled = true
+
+-- ==================== CONFIG ====================
+local FADE_DISTANCE = 280
+local MAX_DISTANCE = 500000   -- ← 500 mil metros
+
+local COLORS = {
+    Name = Color3.fromRGB(255, 215, 255),
+    HealthHigh = Color3.fromRGB(0, 255, 100),
+    HealthMed = Color3.fromRGB(255, 200, 60),
+    HealthLow = Color3.fromRGB(255, 70, 70),
+    Distance = Color3.fromRGB(160, 200, 255),
+    MD = Color3.fromRGB(255, 120, 255)
+}
+
+-- ==================== GET MD ====================
+local function GetMD(player)
+    local char = player.Character
+    if not char then return "—" end
+
+    local paths = {
+        {"combat", "mode"}, {"combat", "Mode"}, {"Combat", "mode"}, {"Combat", "Mode"},
+        {"Combat", "currentMode"}, {"combat", "currentMode"},
+        {"Mode"}, {"mode"}, {"CombatMode"}, {"SkillMode"}, {"Stance"},
+        {"Values", "Mode"}, {"Values", "mode"}
+    }
+
+    for _, path in ipairs(paths) do
+        local obj = char
+        for _, p in ipairs(path) do
+            obj = obj:FindFirstChild(p)
+            if not obj then break end
+        end
+        if obj and obj.Value ~= nil then
+            local val = obj.Value
+            if typeof(val) == "number" then
+                return math.floor(val)
+            elseif typeof(val) == "string" then
+                return val
+            end
+        end
+    end
+
+    for _, obj in ipairs(char:GetDescendants()) do
+        if obj:IsA("ValueBase") and (obj.Name:lower():find("mode") or obj.Name:lower():find("md")) then
+            if obj.Value then
+                return typeof(obj.Value) == "number" and math.floor(obj.Value) or tostring(obj.Value)
+            end
+        end
+    end
+
+    return "—"
+end
+
+-- ==================== CREATE ESP ====================
+local function createESP(character, player)
+    if player == LocalPlayer or tracked[character] then return end
+
+    local root = character:WaitForChild("HumanoidRootPart", 5)
+    if not root then return end
+
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "GrokRimuroESP"
+    billboard.Adornee = root
+    billboard.AlwaysOnTop = true
+    billboard.Size = UDim2.new(0, 260, 0, 118)
+    billboard.StudsOffset = Vector3.new(0, 5.5, 0)
+    billboard.MaxDistance = MAX_DISTANCE
+    billboard.LightInfluence = 0
+    billboard.Enabled = espEnabled
+    billboard.Parent = root
+
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1,0,1,0)
+    frame.BackgroundTransparency = 1
+    frame.Parent = billboard
+
+    -- Nome + Username
+    local nameLbl = Instance.new("TextLabel", frame)
+    nameLbl.Size = UDim2.new(1,0,0,30)
+    nameLbl.BackgroundTransparency = 1
+    nameLbl.Text = player.DisplayName .. "  (@" .. player.Name .. ")"
+    nameLbl.TextColor3 = COLORS.Name
+    nameLbl.Font = Enum.Font.GothamBold
+    nameLbl.TextSize = 18
+    nameLbl.TextStrokeTransparency = 0.6
+
+    local healthBg = Instance.new("Frame", frame)
+    healthBg.Size = UDim2.new(0.96, 0, 0, 10)
+    healthBg.Position = UDim2.new(0.02, 0, 0, 32)
+    healthBg.BackgroundColor3 = Color3.new(0,0,0)
+    healthBg.BorderSizePixel = 0
+
+    local healthBar = Instance.new("Frame", healthBg)
+    healthBar.Size = UDim2.new(1,0,1,0)
+    healthBar.BackgroundColor3 = COLORS.HealthHigh
+    healthBar.BorderSizePixel = 0
+
+    local hpLbl = Instance.new("TextLabel", frame)
+    hpLbl.Size = UDim2.new(1,0,0,20)
+    hpLbl.Position = UDim2.new(0,0,0,44)
+    hpLbl.BackgroundTransparency = 1
+    hpLbl.TextColor3 = Color3.fromRGB(220, 255, 220)
+    hpLbl.Font = Enum.Font.Gotham
+    hpLbl.TextSize = 15
+    hpLbl.TextStrokeTransparency = 0.7
+
+    local distLbl = Instance.new("TextLabel", frame)
+    distLbl.Size = UDim2.new(1,0,0,20)
+    distLbl.Position = UDim2.new(0,0,0,66)
+    distLbl.BackgroundTransparency = 1
+    distLbl.TextColor3 = COLORS.Distance
+    distLbl.Font = Enum.Font.Gotham
+    distLbl.TextSize = 15
+    distLbl.TextStrokeTransparency = 0.7
+
+    local mdLbl = Instance.new("TextLabel", frame)
+    mdLbl.Size = UDim2.new(1,0,0,22)
+    mdLbl.Position = UDim2.new(0,0,0,87)
+    mdLbl.BackgroundTransparency = 1
+    mdLbl.TextColor3 = COLORS.MD
+    mdLbl.Font = Enum.Font.GothamSemibold
+    mdLbl.TextSize = 15.5
+    mdLbl.TextStrokeTransparency = 0.6
+    mdLbl.Text = "MD: —"
+
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+    local function updateHealth()
+        if not humanoid or not humanoid.Parent then return end
+        local health = humanoid.Health
+        local maxHealth = humanoid.MaxHealth
+        local percent = math.clamp(health / maxHealth, 0, 1)
+
+        healthBar.Size = UDim2.new(percent, 0, 1, 0)
+        
+        if percent > 0.65 then
+            healthBar.BackgroundColor3 = COLORS.HealthHigh
+        elseif percent > 0.35 then
+            healthBar.BackgroundColor3 = COLORS.HealthMed
+        else
+            healthBar.BackgroundColor3 = COLORS.HealthLow
+        end
+
+        hpLbl.Text = string.format("HP: %d/%d", health, maxHealth)
+    end
+
+    if humanoid then
+        humanoid.HealthChanged:Connect(updateHealth)
+        task.spawn(updateHealth)
+    end
+
+    tracked[character] = {
+        billboard = billboard,
+        root = root,
+        player = player,
+        distLbl = distLbl,
+        mdLbl = mdLbl,
+        frame = frame
+    }
+end
+
+-- ==================== UPDATE LOOP ====================
+local function updateLoop()
+    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return end
+
+    for character, data in pairs(tracked) do
+        if not character.Parent then
+            pcall(function() data.billboard:Destroy() end)
+            tracked[character] = nil
+            continue
+        end
+
+        local dist = (data.root.Position - myRoot.Position).Magnitude
+        data.distLbl.Text = string.format("Dist: %.0fm", dist)
+        data.mdLbl.Text = "MD: " .. GetMD(data.player)
+
+        if dist > FADE_DISTANCE then
+            local alpha = math.clamp(1 - (dist - FADE_DISTANCE)/140, 0.25, 1)
+            data.frame.GroupTransparency = 1 - alpha
+        else
+            data.frame.GroupTransparency = 0
+        end
+    end
+end
+
+RunService.Heartbeat:Connect(updateLoop)
+
+-- ==================== TOGGLE ====================
+local function toggleESP()
+    espEnabled = not espEnabled
+    for _, data in pairs(tracked) do
+        if data.billboard then
+            data.billboard.Enabled = espEnabled
+        end
+    end
+    print("ESP:", espEnabled and "ON ✅" or "OFF ❌")
+end
+
+-- ==================== SETUP ====================
+local function onCharacterAdded(player, character)
+    task.delay(1.2, function()
+        if character and character.Parent then
+            createESP(character, player)
+        end
+    end)
+end
+
+for _, plr in ipairs(Players:GetPlayers()) do
+    if plr ~= LocalPlayer then
+        if plr.Character then onCharacterAdded(plr, plr.Character) end
+        plr.CharacterAdded:Connect(function(c) onCharacterAdded(plr, c) end)
+    end
+end
+
+Players.PlayerAdded:Connect(function(plr)
+    if plr ~= LocalPlayer then
+        plr.CharacterAdded:Connect(function(c) onCharacterAdded(plr, c) end)
+    end
+end)
+
+UserInputService.InputBegan:Connect(function(i, gp)
+    if gp or i.KeyCode ~= Enum.KeyCode.U then return end
+    toggleESP()
+end)
+
+print("✅ ESP Premium carregado com sucesso! Pressione U para ligar/desligar")
